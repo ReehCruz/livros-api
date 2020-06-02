@@ -2,13 +2,17 @@ package com.rebeca.livros.api.handler;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.rebeca.livros.api.domain.DetalhesErro;
+import com.rebeca.livros.api.service.exception.AutorExistenteException;
+import com.rebeca.livros.api.service.exception.AutorNaoEncontradoException;
 import com.rebeca.livros.api.service.exception.LivroNaoEncontradoException;
+import com.rebeca.livros.api.service.exception.ObjectNotFoundException;
 
 @ControllerAdvice
 public class ResourceExceptionHandler {
@@ -24,6 +28,52 @@ public class ResourceExceptionHandler {
 		erro.setTimestamp(System.currentTimeMillis());
 		
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+	}
+	
+	@ExceptionHandler(AutorExistenteException.class)
+	public ResponseEntity<DetalhesErro> handleAutorExistenteException
+							(AutorExistenteException e, HttpServletRequest request) {
+		
+		DetalhesErro erro = new DetalhesErro();
+		erro.setStatus(409l);
+		erro.setTitulo("Autor já existente");
+		erro.setMensagemDesenvolvedor("http://erros.livros-api.com/409");
+		erro.setTimestamp(System.currentTimeMillis());
+		
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+	}
+	
+	@ExceptionHandler(AutorNaoEncontradoException.class)
+	public ResponseEntity<DetalhesErro> handleAutorNaoEncontradoException
+							(AutorNaoEncontradoException e, HttpServletRequest request) {
+		
+		DetalhesErro erro = new DetalhesErro();
+		erro.setStatus(404l);
+		erro.setTitulo("O autor não pôde ser encontrado");
+		erro.setMensagemDesenvolvedor("http://erros.livros-api.com/404");
+		erro.setTimestamp(System.currentTimeMillis());
+		
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+	}
+	
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<DetalhesErro> handleDataIntegrityViolationException
+							(DataIntegrityViolationException e, HttpServletRequest request) {
+		
+		DetalhesErro erro = new DetalhesErro();
+		erro.setStatus(400l);
+		erro.setTitulo("Requisição inválida");
+		erro.setMensagemDesenvolvedor("http://erros.livro-api.com/400");
+		erro.setTimestamp(System.currentTimeMillis());
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+	}
+	
+	@ExceptionHandler(ObjectNotFoundException.class)
+	public ResponseEntity<StandardError> objectNotFound(ObjectNotFoundException e, HttpServletRequest request){
+		
+		StandardError err = new StandardError(HttpStatus.NOT_FOUND.value(), e.getMessage(), System.currentTimeMillis()); 
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
 	}
 	
 }
